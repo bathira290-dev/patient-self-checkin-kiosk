@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
@@ -96,3 +97,134 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+=======
+# Patient Self Check-in Kiosk
+
+A healthcare-themed kiosk application for patient self-registration with token generation. Built with React, FastAPI, and SQLite.
+
+## Tech Stack
+
+| Layer    | Technology                          |
+|----------|-------------------------------------|
+| Frontend | React.js, React Router, Fetch API   |
+| Backend  | FastAPI (Python)                    |
+| Database | SQLite                              |
+
+## Project Structure
+
+```
+/backend
+  main.py              # FastAPI app, SQLite DB, REST endpoints
+  requirements.txt     # Python dependencies
+
+/frontend
+  public/
+    index.html
+  src/
+    pages/
+      Welcome.jsx      # Kiosk welcome screen
+      Register.jsx     # Patient registration form
+      Token.jsx        # Token confirmation screen
+      Admin.jsx        # Admin dashboard
+    components/
+      Navbar.jsx       # Top navigation bar
+      Spinner.jsx      # Loading spinner
+    App.jsx            # Router configuration
+    index.js           # React entry point
+    index.css          # Global styles
+  package.json
+```
+
+## Backend Setup
+
+1. Navigate to the backend directory:
+
+   ```bash
+   cd backend
+   ```
+
+2. Create and activate a virtual environment (recommended):
+
+   ```bash
+   python -m venv venv
+
+   # Windows
+   venv\Scripts\activate
+
+   # macOS/Linux
+   source venv/bin/activate
+   ```
+
+3. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Start the FastAPI server:
+
+   ```bash
+   uvicorn main:app --reload --port 8000
+   ```
+
+   The API will be available at `http://localhost:8000`. Interactive docs at `http://localhost:8000/docs`.
+
+## Frontend Setup
+
+1. Navigate to the frontend directory:
+
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+
+   ```bash
+   npm start
+   ```
+
+   The app will open at `http://localhost:3000`.
+
+## API Endpoints
+
+| Method | Endpoint              | Description                              |
+|--------|-----------------------|------------------------------------------|
+| POST   | `/api/patients`       | Register a patient and generate a token  |
+| GET    | `/api/patients`       | List all patients (`?search`, `?department`) |
+| GET    | `/api/patients/{id}`  | Get a single patient by ID               |
+
+Token numbers auto-increment per department (e.g., Cardiology token 1, 2, 3…).
+
+## Application Routes
+
+| Route       | Description                                      |
+|-------------|--------------------------------------------------|
+| `/welcome`  | Welcome screen with Check In button              |
+| `/register` | Patient registration form with validation        |
+| `/token`    | Token confirmation with print and auto-redirect  |
+| `/admin`    | Admin dashboard with search and department filter|
+
+## Running Both Services
+
+Open two terminals:
+
+**Terminal 1 — Backend:**
+```bash
+cd backend
+uvicorn main:app --reload --port 8000
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+npm start
+```
+
+Then visit `http://localhost:3000/welcome` to use the kiosk.
+>>>>>>> 6049ce8 (Add patient self check-in kiosk app)

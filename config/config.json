@@ -1,0 +1,10 @@
+{
+  "userSettings": {
+    "gcpRegion": "global",
+    "globalPermissionGrants": {
+      "allow": [
+        "command(git clone)"
+      ]
+    }
+  }
+}

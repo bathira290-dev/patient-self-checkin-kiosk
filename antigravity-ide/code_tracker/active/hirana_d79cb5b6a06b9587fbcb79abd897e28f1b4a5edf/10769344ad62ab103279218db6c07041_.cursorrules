@@ -1,0 +1,293 @@
+�_# === General Project Philosophy ===
+# The project should be scalable, modular, and maintainable.
+# Avoid over-engineering — prefer clear, practical, and consistent solutions.
+
+general:
+  - Follow existing patterns and conventions found in the codebase.
+  - Always adhere to industry best practices for the technologies being used.
+  - Maintain consistency with the current codebase architecture and style.
+  - Always write production-quality, maintainable, readable code.
+  - Use latest Next.js with typescript.
+  - Never add placeholder or dummy files.
+  - Never create test files (no *.test.ts, *.spec.ts, etc.).
+  - Always use TypeScript.
+  - All components should be functional and typed (React.FC discouraged — use explicit props typing).
+  - Strict mode and linting must always pass.
+  - Prefer clarity over cleverness.
+
+# === Folder & Module Structure ===
+structure:
+  - Use the Next.js 15 App Router layout (app/ directory).
+  - Pages live under app/, with route groups if needed.
+  - Reusable UI components go under `components/`.
+  - Complex logic belongs to `lib/` or `utils/` (pure functions only).
+  - Data fetching and mutations go into `services/` or `actions/`.
+  - Contexts and hooks go into `contexts/` and `hooks/`.
+  - Do not create “common”, “misc”, or “helpers” folders. Name them clearly by purpose.
+  - Never put more than one unrelated concern in a single file.
+
+# === Coding Standards ===
+coding:
+  - Use ES2024+ syntax and async/await everywhere.
+  - Always use named exports unless default is idiomatic (e.g., React components).
+  - Prefer server components by default; only use “use client” when required.
+  - Ensure API routes are colocated in `app/api/`.
+  - Use absolute imports via `@/` prefix.
+  - Maintain strict type checking with `"strict": true` in tsconfig.
+  - Use ESLint + Prettier with consistent rules.
+  - Keep line length under 100 chars.
+  - Write meaningful comments only where logic isn’t obvious.
+  - No magic numbers or strings — extract constants into `constants/`.
+
+# === Styling ===
+styling:
+  - Use Tailwind CSS as default styling framework.
+  - Use semantic class names and avoid arbitrary pixel values when possible.
+  - Use shadcn/ui components where appropriate (consistent design system).
+  - Never inline large style blocks in JSX.
+
+# === Data Layer & APIs ===
+data:
+  - Fetch data in server components or actions, not client components.
+  - Use React Query or SWR only when necessary for client data fetching.
+  - Handle API errors gracefully with typed error responses.
+  - Use environment variables for secrets (never commit them).
+  - Follow REST or GraphQL schema strictly, don't mix ad-hoc calls.
+
+# === Service Layer Architecture ===
+service_layer:
+  - Keep only GENERAL/SHARED services in `/services/` (e.g., core AI clients, email, SMS).
+  - Module-specific services MUST be colocated using `(services)` folder pattern.
+  - Example: HR module services go in `app/(dashboard)/hr/(services)/`.
+  - Services should ONLY be used in:
+    * API routes (`app/api/**/route.ts`)
+    * Server components
+    * Server actions
+  - Client components NEVER call services directly — always go through API routes.
+  - Each service should be a singleton class or module with clear, focused responsibility.
+  - Service file naming: `domainService.ts` (e.g., `geminiService.ts`, `jobGenerationService.ts`)
+  
+  Service Structure Example:
+    ```
+    services/
+      ai/
+        geminiService.ts           # GENERAL: Core AI API client (used across modules)
+      email/
+        emailService.ts            # GENERAL: Email service (used across modules)
+    
+    app/(dashboard)/hr/
+      (services)/
+        jobGenerationService.ts    # MODULE-SPECIFIC: HR job generation
+        candidateMatchingService.ts # MODULE-SPECIFIC: HR candidate matching
+      (lib)/
+        jobsApi.ts                 # MODULE-SPECIFIC: Client-side API utilities
+    ```
+
+# === API Routes Best Practices ===
+api_routes:
+  - API routes live in `app/api/` following Next.js 15 conventions.
+  - Each route should handle ONE specific operation or resource.
+  - Always validate request body and parameters.
+  - Use consistent error handling and response formats.
+  - Return proper HTTP status codes (200, 201, 400, 401, 404, 500).
+  - Keep routes thin — delegate business logic to services.
+  - Type all request/response data using shared types from `/types/`.
+  
+  API Route Structure:
+    ```typescript
+    import { NextRequest, NextResponse } from "next/server";
+    import { serviceInstance } from "@/services/domain/serviceFile";
+    import type { RequestType, ResponseType } from "@/types/domain";
+    
+    export async function POST(request: NextRequest) {
+      try {
+        const body = await request.json() as RequestType;
+        
+        // Validation
+        if (!body.requiredField) {
+          return NextResponse.json(
+            { error: "Missing required field" },
+            { status: 400 }
+          );
+        }
+        
+        // Delegate to service
+        const result = await serviceInstance.method(body);
+        
+        return NextResponse.json(result);
+      } catch (error) {
+        console.error("Operation error:", error);
+        return NextResponse.json(
+          { 
+            error: "Operation failed",
+            message: error instanceof Error ? error.message : "Unknown error"
+          },
+          { status: 500 }
+        );
+      }
+    }
+    ```
+
+# === API Client Layer ===
+api_clients:
+  - Keep only GENERAL API clients in `lib/api/` (if any).
+  - Module-specific API clients MUST be colocated in `(lib)` folder within the module.
+  - Example: HR module API client goes in `app/(dashboard)/hr/(lib)/jobsApi.ts`.
+  - API clients are thin wrappers around fetch with typed interfaces.
+  - Use singleton pattern for API clients.
+  - Handle errors consistently and return typed responses.
+  - File naming: `domainApi.ts` (e.g., `jobsApi.ts`, `candidatesApi.ts`)
+  
+  API Client Structure:
+    ```typescript
+    // app/(dashboard)/hr/(lib)/jobsApi.ts
+    import type { RequestType, ResponseType } from "../(types)/domain";
+    
+    class JobsApiClient {
+      private baseUrl: string;
+      
+      constructor() {
+        this.baseUrl = "/api/jobs";
+      }
+      
+      async operation(request: RequestType): Promise<ResponseType> {
+        const response = await fetch(`${this.baseUrl}/endpoint`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(request),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Operation failed");
+        }
+        
+        return response.json();
+      }
+    }
+    
+    export const jobsApi = new JobsApiClient();
+    ```
+
+# === Third-Party API Integration ===
+third_party_apis:
+  - Core third-party API clients go in `/services/` (e.g., `geminiService.ts`, `stripeService.ts`).
+  - Module-specific services that USE these core clients are colocated with the module.
+  - Never expose API keys in client code — always use environment variables.
+  - Always add error handling and fallbacks for third-party API failures.
+  - Use typed interfaces for all API requests and responses.
+  
+  Example Structure:
+    ```
+    services/ai/
+      geminiService.ts              # GENERAL: Core Gemini client (low-level API calls)
+    
+    app/(dashboard)/hr/(services)/
+      jobGenerationService.ts       # MODULE-SPECIFIC: Uses geminiService
+      candidateMatchingService.ts   # MODULE-SPECIFIC: Uses geminiService
+    ```
+
+# === AI Models & Configuration ===
+ai_models:
+  - Always use the latest available Google Gemini models.
+  - Current latest Gemini models (as of project):
+    * `gemini-2.0-flash` - Latest fast model
+    * `gemini-2.5-flash` - Newest flash model
+  - NEVER downgrade to older models (e.g., gemini-1.5-flash) unless explicitly required.
+  - Default to `gemini-2.0-flash` for general AI tasks requiring speed.
+  - Use `gemini-2.5-flash` for tasks requiring the absolute latest capabilities.
+  - Model names should be configurable via environment variables or constants.
+  - Always check Google AI documentation for model capabilities and limits before selection.
+
+# === Environment Variables ===
+env_variables:
+  - Store all API keys and secrets in `.env.local` (never commit).
+  - Access environment variables ONLY in server-side code (API routes, server components, services).
+  - Create `.env.example` with all required variables (without values).
+  - Use descriptive variable names (e.g., `GEMINI_API_KEY`, `DATABASE_URL`).
+  - Validate required environment variables on app startup.
+
+# === File Naming Conventions ===
+naming:
+  - Components: `PascalCase.tsx` (e.g., `UserCard.tsx`)
+  - Hooks: `useCamelCase.ts`
+  - Utilities: `camelCase.ts`
+  - Constants: `UPPER_CASE.ts`
+  - Server actions: `verbNoun.ts` (e.g., `createUser.ts`)
+  - Folders: lowercase, no spaces, descriptive names.
+
+# === Code Organization ===
+organization:
+  - Each component should handle one concern.
+  - Break large components into subcomponents in a `/components` subfolder.
+  - Keep server/client code clearly separated.
+  - Avoid deep nesting — prefer flatter hierarchies.
+  - Group related files with index.ts barrel exports for clean imports.
+
+# === Module Colocation Pattern ===
+module_colocation:
+  - ONLY shared/reusable items belong in root directories (`/components/ui/`, `/services/`, `/types/`, `/lib/`).
+  - Module-specific items MUST be colocated using route group folders.
+  - Use these colocation patterns:
+    * `(components)/` - Module-specific UI components
+    * `(types)/` - Module-specific type definitions
+    * `(services)/` - Module-specific business logic services
+    * `(lib)/` - Module-specific utilities and API clients
+  - Example - HR Module Structure:
+    ```
+    app/(dashboard)/hr/
+      (components)/
+        AIIndicator.tsx           # HR-specific component
+      (types)/
+        ai.ts                     # HR-specific AI types
+        candidates.ts             # HR-specific candidate types
+      (services)/
+        jobGenerationService.ts   # HR-specific service
+      (lib)/
+        jobsApi.ts                # HR-specific API client
+      jobs/
+        page.tsx                  # Uses relative imports to (lib), (types), (services)
+    ```
+  - Use relative imports for all colocated items (e.g., `../(lib)/jobsApi`, `../(types)/ai`).
+  - Never create module-specific folders in root directories.
+
+# === Version Control ===
+git:
+  - Use conventional commits: feat, fix, refactor, chore, perf.
+  - Always commit formatted and linted code.
+  - No generated or build files in repo.
+  - Add `.env.example` for required env vars.
+
+# === Performance ===
+performance:
+  - Use dynamic imports for heavy client-only components.
+  - Optimize images using Next/Image.
+  - Memoize expensive computations.
+  - Avoid unnecessary re-renders — use useMemo, useCallback wisely.
+  - Prefer static generation (SSG) or incremental regeneration (ISR) over SSR when possible.
+
+# === Do NOTs ===
+dont:
+  - Don't add test files or dummy mocks.
+  - Don't overuse "use client" directive.
+  - Don't include unnecessary dependencies.
+  - Don't leave unused imports or dead code.
+  - Don't store sensitive info in code.
+  - Don't abstract too early; extract only when reuse is clear.
+
+# === CRITICAL: NO DOCUMENTATION ===
+documentation:
+  - NEVER create documentation files (*.md, README, GUIDE, etc.) unless EXPLICITLY requested by the user.
+  - This includes:
+    * Architecture documentation
+    * Setup guides
+    * README files
+    * API documentation
+    * Tutorial files
+    * Migration guides
+    * Summary files
+  - Code should be self-documenting through clear naming and structure.
+  - Comments in code should be minimal and only where logic is complex.
+  - If user asks about architecture or patterns, explain verbally, DO NOT create files.
+
+�_"(d79cb5b6a06b9587fbcb79abd897e28f1b4a5edf2file:///d:/hirana/.cursorrules:file:///d:/hirana

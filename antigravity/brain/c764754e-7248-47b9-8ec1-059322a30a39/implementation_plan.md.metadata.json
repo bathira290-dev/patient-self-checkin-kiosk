@@ -1,0 +1,6 @@
+{
+  "artifactType":  "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary":  "Implementation plan for Patient Self Check-in Kiosk Application. Details FastAPI backend with SQLite, React.js frontend with Vite on port 3000, and beautiful monochrome/healthcare styling.",
+  "updatedAt":  "2026-06-05T14:58:38.616874100Z",
+  "requestFeedback":  true
+}
